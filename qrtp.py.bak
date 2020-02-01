@@ -19,11 +19,9 @@ HEADER_END = '-----END HEADER-----'
 class QrSend(object):
     # Split the data into to equal sizes
     data = None
-    raw = None
 
     def __init__(self, size=30, data=None):
         self.size = size
-        self.raw = data
         self.data = self._chunks(data, self.size)
 
     def _chunks(self, l, size=None):
@@ -36,7 +34,7 @@ class QrSend(object):
         return [l[i:i + n] for i in range(0, data_length, n)]
 
     def _headers(self):
-        dataStr = str(self.raw)
+        dataStr = str(self.data)
         encodedStr = dataStr.encode()
         hash = hashlib.sha1(encodedStr)
         hexDigest = hash.hexdigest()
@@ -63,7 +61,7 @@ class QrSend(object):
         counter = 0
         print("No. of parts:" + str(len(self.data)))
         for part in self.data:
-            payload = '{0:010d}:{1}'.format(counter, base64.b64encode(part).decode())
+            payload = '{0:010d}:{1}'.format(counter, base64.b64encode(part))
             self._printqr(payload)
             counter += 1
             dataLen = len(self.data)
@@ -96,7 +94,7 @@ class QrReceive(object):
         # self.capture = cv.CaptureFromCAM(camera_index) #for some reason, this doesn't work
         # self.capture = cv.CreateCameraCapture(-1)
         #self.capture = cv.CaptureFromCAM(0)
-        self.capture = cv.VideoCapture(0)
+        self.capture = cv.VideoCapture(1)
         if not self.capture.isOpened():
              print("Cannot open camera")
              exit()
@@ -135,9 +133,9 @@ class QrReceive(object):
             cv.waitKey(5)
 
     def process_symbol(self, symbol):
-        payload = symbol.data
-        #print('Symbol: {}'.format(symbol))
-        print('Payload: {}'.format(payload))
+        payload = symbol.data.decode()
+        print('Symbol: {}'.format(symbol))
+        print('Decoded data: {}'.format(payload))
         if payload == MESSAGE_BEGIN:
             print("found message begin")
             self.start = True
@@ -185,7 +183,7 @@ class QrReceive(object):
             cv.destroyWindow(self.window_name)
             return False
 
-        iteration, data = int(payload.split(':')[0]), base64.b64decode(payload.split(':')[1], validate=True)
+        iteration, data = int(payload.split(':')[0]), base64.b64decode(payload.split(':')[1])
         print("Base64Encoded Data is {}".format(data))
 
         if iteration in self.received_iterations:
