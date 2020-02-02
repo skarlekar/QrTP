@@ -59,7 +59,7 @@ class QrSend(object):
             raise Exception('No Data to Send')
         for header in self._headers():
             self._printqr(header)
-            time.sleep(0.5)
+            time.sleep(0.2)
         counter = 0
         print("No. of parts:" + str(len(self.data)))
         for part in self.data:
@@ -68,7 +68,7 @@ class QrSend(object):
             counter += 1
             dataLen = len(self.data)
             print('{0}/{1}'.format(counter, len(self.data)))
-            time.sleep(0.3)
+            time.sleep(0.2)
         self._printqr(MESSAGE_END)
 
     def sample_size(self, size=None):
@@ -90,12 +90,7 @@ class QrReceive(object):
     received_iterations = []
 
     def __init__(self):
-        #cv.NamedWindow(self.window_name, cv.CV_WINDOW_AUTOSIZE)
         cv.namedWindow(self.window_name, cv.WINDOW_AUTOSIZE)
-
-        # self.capture = cv.CaptureFromCAM(camera_index) #for some reason, this doesn't work
-        # self.capture = cv.CreateCameraCapture(-1)
-        #self.capture = cv.CaptureFromCAM(0)
         self.capture = cv.VideoCapture(0)
         if not self.capture.isOpened():
              print("Cannot open camera")
@@ -105,21 +100,15 @@ class QrReceive(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # TODO: Respond based on the exc_val
         self.capture = None
 
     def process_frames(self):
 
         while True:
-            #frame = cv.QueryFrame(self.capture)
             ret,frame = self.capture.read()
-            # if frame is read correctly ret is True
             if not ret:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
-            #aframe = numpy.asarray(frame[:, :])
-            #g = cv.fromarray(aframe)
-            #g = numpy.asarray(g)
 
             imgray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             decodedObjects = decode(imgray)
@@ -135,8 +124,7 @@ class QrReceive(object):
             cv.waitKey(5)
 
     def process_symbol(self, symbol):
-        payload = symbol.data
-        #print('Symbol: {}'.format(symbol))
+        payload = symbol.data.decode()
         print('Payload: {}'.format(payload))
         if payload == MESSAGE_BEGIN:
             print("found message begin")
@@ -170,7 +158,6 @@ class QrReceive(object):
         # Cleanup On Message End
         if payload == MESSAGE_END:
             # integrity check!
-            #final_hash = hashlib.sha1(''.join(payload)).hexdigest()
             print("Starting final integrity check")
             strData = str(self.data)
             encodedStrData = strData.encode()
